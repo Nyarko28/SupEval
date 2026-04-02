@@ -75,6 +75,8 @@ docker compose up --build -d
 
 See `docker/README.txt` for environment variables and troubleshooting.
 
+**Railway (PHP + MySQL, no Java):** see [`RAILWAY.md`](RAILWAY.md) and `sql/schema_railway.sql`.
+
 ## Directory Structure
 - `public/`: Entry point (`index.php`) and assets.
 - `src/`: Application source code.

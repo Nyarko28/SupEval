@@ -7,6 +7,7 @@ use PDOException;
 
 class Database {
     private $host;
+    private $port;
     private $db_name;
     private $username;
     private $password;
@@ -14,17 +15,38 @@ class Database {
 
     public function __construct()
     {
-        $this->host = getenv('DB_HOST') !== false && getenv('DB_HOST') !== '' ? getenv('DB_HOST') : 'localhost';
-        $this->db_name = getenv('DB_NAME') !== false && getenv('DB_NAME') !== '' ? getenv('DB_NAME') : 'supplier_saas';
-        $this->username = getenv('DB_USER') !== false && getenv('DB_USER') !== '' ? getenv('DB_USER') : 'root';
-        $this->password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
+        // DB_* (explicit) or Railway / cloud MySQL plugin (MYSQL_*)
+        $this->host = $this->firstEnv(['DB_HOST', 'MYSQL_HOST'], 'localhost');
+        $this->port = $this->firstEnv(['DB_PORT', 'MYSQL_PORT'], '3306');
+        $this->db_name = $this->firstEnv(['DB_NAME', 'MYSQL_DATABASE'], 'supplier_saas');
+        $this->username = $this->firstEnv(['DB_USER', 'MYSQL_USER'], 'root');
+        $pw = getenv('DB_PASSWORD');
+        if ($pw === false || $pw === '') {
+            $pw = getenv('MYSQL_PASSWORD');
+        }
+        $this->password = $pw !== false ? $pw : '';
+    }
+
+    /**
+     * @param list<string> $keys
+     */
+    private function firstEnv(array $keys, string $default): string
+    {
+        foreach ($keys as $key) {
+            $v = getenv($key);
+            if ($v !== false && $v !== '') {
+                return $v;
+            }
+        }
+        return $default;
     }
 
     public function getConnection() {
         $this->conn = null;
 
         try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+            $dsn = 'mysql:host=' . $this->host . ';port=' . $this->port . ';dbname=' . $this->db_name;
+            $this->conn = new PDO($dsn, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->exec("set names utf8");
         } catch(PDOException $exception) {

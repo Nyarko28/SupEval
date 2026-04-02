@@ -1,0 +1,9 @@
+.git
+.gitignore
+**/target/
+evaluation-service/target/
+.idea
+*.md
+docker-compose.yml
+.env
+.env.*
